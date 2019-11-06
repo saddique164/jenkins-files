@@ -1,0 +1,63 @@
+pipeline {
+    
+    agent any
+    
+    environment {
+    
+     git_repo = "https://github.com/saddique164/JenkinsProjectJava.git"
+     node_name = "master"
+	 slave_branch_repo= "C:\\gitJava\\gitthreeTable\\JenkinsProjectJava"
+	 master_local_repo ="C:\\gitJava\\gittwoTable"
+	 command_location="C:\\gitJava\\gittwoTable"
+    
+        }
+        
+    triggers {
+         cron '59 * * * *'
+        }
+    
+    stages { 
+        
+            stage ('slave Branch') {
+            
+					agent {	
+		
+							node { label "${env.node_name}"  
+							customWorkspace '${env.slave_branch_repo}'
+						}
+					}
+          
+				steps { 
+                          git branch: 'slave', url:  "${env.git_repo}"
+                    }
+				}
+			
+			stage ('master Branch') {
+            
+					agent {	
+		
+						node { label "${env.node_name}"  
+						customWorkspace "${env.master_local_repo}"
+						
+						}
+					}
+          
+				steps { 
+                          git branch: 'master', url:  "${env.git_repo}"
+						
+						}
+					}
+                       
+            stage ( 'command' ){
+              
+                steps {
+                bat label: '', script: '''
+                cd env.command_location
+			    javac Hello.java
+			    java Hello'''
+                }
+            }
+            
+        }    
+    
+  }

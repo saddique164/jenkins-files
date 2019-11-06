@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    
+    environment {
+    
+     git_repo = "https://github.com/saddique164/JenkinsProjectJava.git"
+     node_name = "master"
+     javaCode_lct= "C:\\gitJava\\gitthreeTable\\JenkinsProjectJava"
+    
+        }
+        
+    triggers {
+         cron '59 * * * *'
+        }
+    
+    stages { 
+        
+            stage ('slave Branch') {
+            
+        agent {	
+		
+		 node { label "${env.node_name}"  
+		    	customWorkspace '/c/gitJava/gittwoTable'
+		 }
+		}
+          
+            steps { 
+                          git branch: 'slave', url:  "${env.git_repo}"
+                    }
+            }
+                       
+            stage ( 'command' ){
+              
+                steps {
+                bat label: '', script: '''cd ${env.javaCode_lct}
+			    javac Hello.java
+			    java Hello'''
+                }
+            }
+            
+        }    
+    
+  }

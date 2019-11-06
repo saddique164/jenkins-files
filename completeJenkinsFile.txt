@@ -1,0 +1,140 @@
+pipeline {
+    
+    agent any
+    
+    environment {
+    
+     git_repo = "https://github.com/saddique164/JenkinsProjectJava.git"
+     node_name = "master"
+	 slave_branch_repo= "C:\\gitJava\\gitthreeTable\\JenkinsProjectJava"
+	 master_local_repo ="C:\\gitJava\\gittwoTable"
+	 command_location="C:\\gitJava\\gittwoTable"
+     project_path = "C:\\gitJava\\gitthreeTable"
+        }
+        
+    triggers {
+    
+       //  cron '59 * * * *'
+       pollSCM('10 * * * *')
+    
+        }
+    
+    options {
+	
+		retry(3)
+		disableConcurrentBuilds()
+		quietPeriod(10)
+		skipStagesAfterUnstable() 
+		timestamps()
+    
+    	}
+    	
+    parameters {
+     
+        string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
+
+        text(name: 'BIOGRAPHY', defaultValue: '', description: 'Enter some information about the person')
+
+        booleanParam(name: 'TOGGLE', defaultValue: true, description: 'Toggle this value')
+
+        choice(name: 'CHOICE', choices: ['One', 'Two', 'Three'], description: 'Pick something')
+
+        password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'Enter a password')
+    
+        
+    }
+    
+    
+    stages {
+        
+        stage('Parameters') {
+            
+            steps {
+            
+                echo "Hello ${params.PERSON}"
+
+                echo "Biography: ${params.BIOGRAPHY}"
+
+                echo "Toggle: ${params.TOGGLE}"
+
+                echo "Choice: ${params.CHOICE}"
+
+                echo "Password: ${params.PASSWORD}"
+            }
+        }
+        
+            stage ('slave Branch') {
+            
+					agent {	
+		
+							node { label "${env.node_name}"  
+							customWorkspace '${env.slave_branch_repo}'
+						}
+					}
+          
+				steps { 
+                          git branch: 'slave', url:  "${env.git_repo}"
+                          echo "Hello ${params.choice}"
+                    }
+                    post {
+                       success {
+                            echo "Saleh is here bro"
+                    }
+                }
+				}
+			
+			stage ('master Branch') {
+            
+					agent {	
+		
+						node { label "${env.node_name}"  
+						customWorkspace "${env.master_local_repo}"
+						
+						}
+					}
+          
+				steps { 
+                          git branch: 'master', url:  "${env.git_repo}"
+						
+						}
+					
+					}
+				
+                       
+            stage ( 'command' ){
+                    input {
+					message "press ok to move forward"
+					submitter "user1"
+					parameters {
+					        string (name:'username', defaultValue: 'saddique', description: 'saddique is the user to press ok' )
+					    }
+					    }
+					
+                steps {
+                bat label: '', script: '''
+                cd env.command_location
+			    javac Hello.java
+			    java Hello'''
+                }
+                     
+             
+        
+                post {
+                            regression {
+                                echo "Executes only if current execution fails, aborts or is unstable and the previous run was successful."
+                            }
+                        }
+            }
+			
+			stage("Archival"){
+                
+                steps {
+                    
+                    archiveArtifacts artifacts: '${env.project_path}\\JenkinsProjectJava\\*.java', onlyIfSuccessful: true
+                    
+                }
+            }   
+        
+        }    
+        
+}

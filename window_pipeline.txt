@@ -1,0 +1,133 @@
+pipeline { 
+    
+	agent any
+    
+    environment {
+    
+     git_repo = "git@github.com:saddique164/JenkinsProjectJava.git"
+     node_name = "master"
+	 slave_branch_repo= "C:\\gitJava\\gitthreeTable\\JenkinsProjectJava"
+	 master_local_repo ="C:\\gitJava\\gittwoTable\\JenkinsProjectJava"
+	 command_location="C:\\gitJava\\gittwoTable\\JenkinsProjectJava"
+	 TestName = "ikram"
+     
+      }
+	  
+	   triggers {
+    
+       //  cron '59 * * * *'
+       pollSCM('H/10 * * * *')
+    
+        }
+		
+	    options {
+	
+		//retry(3)
+		disableConcurrentBuilds()
+		quietPeriod(10)
+		skipStagesAfterUnstable() 
+		timestamps()
+    
+    	}
+		
+		stages {
+		
+		   stage ('slave Branch') {
+            
+					agent {	
+		
+							node { label "${env.node_name}"  
+							customWorkspace "${env.master_local_repo}"
+						}
+					}
+          
+				steps { 
+                         git branch: 'master', url: 'https://github.com/saddique164/JenkinsProjectJava.git'
+                         echo "Path: ${env.master_local_repo}"  
+                    }
+                    post {
+                       success {
+                            echo "Saleh is here bro"
+                    }
+                }
+			}
+			
+		stage ( 'command' ){
+                    input {
+					message "press ok to move forward"
+					submitter "user1"
+					parameters {
+					        string (name:'username', defaultValue: 'saddique', description: 'saddique is the user to press ok' )
+							}
+							}
+					
+                steps {
+                bat label: '', script: '''
+                cd C:\\gitJava\\gitthreeTable\\JenkinsProjectJava
+			    javac Hello.java
+			    java Hello'''
+                }
+				}
+		
+		stage("Archival"){
+                
+                steps {
+                    script {
+                    def archive_path = "C:\\gitJava\\gitthreeTable\\JenkinsProjectJava\\" 
+                    dir(archive_path){    
+                    archiveArtifacts artifacts: '*.java', onlyIfSuccessful: true
+                    
+                    if (env.TestName=="saddique"){
+                        
+                        echo "Name: ${env.TestName}"
+                        
+                    }
+                 }
+                }
+               }
+            }
+                stage('Parallel Stage') {
+            when {
+                branch 'slave'
+            }
+            failFast true
+            parallel {
+                stage('Branch A') {
+                    agent {
+                        label "${env.node_name}"
+                    }
+                    steps {
+                        echo "On Branch A"
+                    }
+                }
+                stage('Branch B') {
+                    agent {
+                        label "${env.node_name}"
+                    }
+                    steps {
+                        echo "On Branch B"
+                    }
+                }
+                stage('Branch C') {
+                    agent {
+                        label "${env.node_name}"
+                    }
+                    stages {
+                        stage('Nested 1') {
+                            steps {
+                                echo "In stage Nested 1 within Branch C"
+                            }
+                        }
+                        stage('Nested 2') {
+                            steps {
+                                echo "In stage Nested 2 within Branch C"
+                            }
+                        }
+                    }
+                }
+            }
+        }			
+		
+		
+		}
+}

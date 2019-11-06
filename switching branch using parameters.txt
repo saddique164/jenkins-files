@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+    parameters {
+     gitParameter branch: '', branchFilter: 'origin/(.*)', defaultValue: 'master', description: 'This will switch the branch from master to slave.', name: 'Branch', quickFilterEnabled: false, selectedValue: 'TOP', sortMode: 'ASCENDING_SMART', tagFilter: '*', type: 'PT_BRANCH'
+        }
+    stages { 
+        stage ('checkout to desire branch'){
+            agent { label 'master' }
+            steps { 
+                git branch: "${params.Branch}", url: 'https://github.com/saddique164/JenkinsProjectJava.git'
+                }
+            }
+            stage ( 'command line stage' ){
+                steps {
+                    
+                bat label: '', script: '''cd C:\\gitJava\\gitthreeTable\\JenkinsProjectJava
+			    javac Hello.java
+			    java Hello'''
+                
+                    
+                }
+            }
+        }    
+    
+  }
